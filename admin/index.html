@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | TicketOne Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body class="admin-body">
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="mark">🎟</span>
+    <div><span>TicketOne</span><span class="sub">Panel Admin</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Principal</div>
+    <a class="sidebar-link active" href="/admin/"><span class="sidebar-link-icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/eventos"><span class="sidebar-link-icon">🎪</span> Eventos</a>
+    <a class="sidebar-link" href="/admin/entradas"><span class="sidebar-link-icon">🎟</span> Entradas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Herramientas</div>
+    <a class="sidebar-link" href="/admin/scanner"><span class="sidebar-link-icon">📷</span> Control Acceso</a>
+    <a class="sidebar-link" href="/admin/estadisticas"><span class="sidebar-link-icon">📈</span> Estadísticas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Web</div>
+    <a class="sidebar-link" href="/" target="_blank"><span class="sidebar-link-icon">🌐</span> Ver web pública</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="admin-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-email" id="admin-email">Cargando...</div>
+        <div class="sidebar-user-role">Administrador</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 4px;">
+      <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" style="border:none;">☀️</button>
+      <button class="sidebar-logout" onclick="doLogout()" title="Cerrar sesión">🚪 Salir</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="admin-main">
+  <div class="admin-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger-admin" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div class="admin-topbar-title">Dashboard</div>
+    </div>
+    <div class="admin-topbar-actions">
+      <span id="topbar-date" style="font-size:0.8rem;color:var(--text-3);"></span>
+      <a href="/admin/eventos" class="btn btn-primary btn-sm">+ Nuevo evento</a>
+    </div>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- Welcome -->
+    <div style="margin-bottom:28px;">
+      <h1 style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;margin-bottom:4px;">Bienvenido de nuevo 👋</h1>
+      <p style="font-size:0.88rem;color:var(--text-3);">Resumen general de TicketOne</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="admin-stats-grid" id="stats-grid">
+      <div class="admin-stat-card">
+        <div class="asc-icon">🎪</div>
+        <div class="asc-label">Eventos activos</div>
+        <div class="asc-value" id="s-events">—</div>
+        <div class="asc-sub" id="s-events-sub">publicados</div>
+      </div>
+      <div class="admin-stat-card success">
+        <div class="asc-icon">🎟</div>
+        <div class="asc-label">Entradas emitidas</div>
+        <div class="asc-value" id="s-tickets">—</div>
+        <div class="asc-sub" id="s-tickets-sub">total activas</div>
+      </div>
+      <div class="admin-stat-card warning">
+        <div class="asc-icon">✅</div>
+        <div class="asc-label">Entradas validadas</div>
+        <div class="asc-value" id="s-used">—</div>
+        <div class="asc-sub" id="s-used-sub">accesos registrados</div>
+      </div>
+      <div class="admin-stat-card danger">
+        <div class="asc-icon">📋</div>
+        <div class="asc-label">Lista de espera</div>
+        <div class="asc-value" id="s-waiting">—</div>
+        <div class="asc-sub">personas esperando</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;margin-bottom:24px;">
+
+      <!-- Chart: Tickets per event -->
+      <div class="chart-card">
+        <div class="chart-card-title">Entradas por evento</div>
+        <div class="chart-container">
+          <canvas id="chart-events"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="chart-card" style="height:100%;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="chart-card-title" style="margin:0;">Actividad reciente</div>
+          <a href="/admin/estadisticas" class="btn btn-ghost btn-sm" style="font-size:0.75rem;">Ver todo →</a>
+        </div>
+        <div class="activity-list" id="activity-list">
+          <div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events Table Preview -->
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="table-toolbar-title">Próximos eventos</div>
+        <a href="/admin/eventos" class="btn btn-ghost btn-sm">Ver todos →</a>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Evento</th>
+              <th>Fecha</th>
+              <th>Categoría</th>
+              <th>Entradas</th>
+              <th>Aforo</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="events-preview-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px;">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('active');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+  }
+  async function doLogout() {
+    await auth.signOut();
+    window.location.href = '/admin/login';
+  }
+
+  // ── Auth Check ──────────────────────────────────────
+  requireAdmin('/admin/login').then(user => {
+    document.getElementById('admin-email').textContent = user.email;
+    document.getElementById('admin-avatar').textContent = user.email.charAt(0).toUpperCase();
+    loadDashboard();
+  }).catch(() => {});
+
+  // ── Set date ────────────────────────────────────────
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+
+  // ── Load Dashboard ──────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const [evSnap, tkSnap] = await Promise.all([
+        db.collection('events').get(),
+        db.collection('tickets').get()
+      ]);
+
+      const events  = evSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const tickets = tkSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const activeEvents  = events.filter(e => e.published);
+      const activeTickets = tickets.filter(t => t.status === 'active');
+      const usedTickets   = tickets.filter(t => t.used && t.status !== 'cancelled');
+      const waitingList   = tickets.filter(t => t.status === 'waiting');
+
+      document.getElementById('s-events').textContent   = activeEvents.length;
+      document.getElementById('s-tickets').textContent  = activeTickets.length;
+      document.getElementById('s-used').textContent     = usedTickets.length;
+      document.getElementById('s-waiting').textContent  = waitingList.length;
+      document.getElementById('s-tickets-sub').textContent = `de ${tickets.filter(t => t.status !== 'cancelled').length} totales`;
+
+      // Chart
+      buildChart(events, tickets);
+
+      // Events preview table
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = events
+        .filter(e => e.published && e.date >= today)
+        .sort((a,b) => a.date.localeCompare(b.date))
+        .slice(0, 6);
+      renderEventsPreview(upcoming, tickets);
+
+      // Activity Log
+      loadActivity();
+
+    } catch (e) {
+      console.error('Dashboard error:', e);
+    }
+  }
+
+  function buildChart(events, tickets) {
+    const ctx = document.getElementById('chart-events').getContext('2d');
+    const top = events
+      .filter(e => e.published)
+      .map(e => ({
+        name: e.title?.substring(0, 22) + (e.title?.length > 22 ? '…' : ''),
+        count: tickets.filter(t => t.eventId === e.id && t.status !== 'cancelled').length
+      }))
+      .sort((a,b) => b.count - a.count)
+      .slice(0, 8);
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: top.map(e => e.name),
+        datasets: [{
+          label: 'Entradas emitidas',
+          data: top.map(e => e.count),
+          backgroundColor: 'rgba(26,110,247,0.7)',
+          borderColor: '#1A6EF7',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color:'#4A6080', font:{size:11} }, grid:{color:'rgba(255,255,255,0.04)'} },
+          y: { ticks: { color:'#4A6080', font:{size:11} }, grid:{color:'rgba(255,255,255,0.04)'} }
+        }
+      }
+    });
+  }
+
+  function renderEventsPreview(events, tickets) {
+    const body = document.getElementById('events-preview-body');
+    if (!events.length) {
+      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px;">No hay próximos eventos</td></tr>';
+      return;
+    }
+    body.innerHTML = events.map(ev => {
+      const issued  = tickets.filter(t => t.eventId === ev.id && t.status !== 'cancelled').length;
+      const pct     = ev.capacity > 0 ? Math.round(((ev.capacity - ev.remaining) / ev.capacity) * 100) : 0;
+      return `
+        <tr>
+          <td class="text-primary">${sanitize(ev.title)}</td>
+          <td>${formatDateShort(ev.date)}</td>
+          <td>${ev.category ? `<span class="chip">${sanitize(ev.category)}</span>` : '—'}</td>
+          <td>${issued}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar-fill" style="width:${pct}%;background:${getCapacityColor(ev.remaining,ev.capacity)}"></div></div>
+              <span style="font-size:0.78rem;color:var(--text-3);">${pct}%</span>
+            </div>
+          </td>
+          <td>${ev.published ? '<span class="badge badge-success">Publicado</span>' : '<span class="badge badge-muted">Borrador</span>'}</td>
+          <td><a href="/admin/eventos?edit=${ev.id}" class="icon-btn" title="Editar">✏️</a></td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function loadActivity() {
+    const container = document.getElementById('activity-list');
+    try {
+      const snap = await db.collection('activity_log')
+        .orderBy('timestamp', 'desc')
+        .limit(8)
+        .get();
+
+      if (snap.empty) {
+        container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Sin actividad reciente</div>';
+        return;
+      }
+
+      container.innerHTML = snap.docs.map(d => {
+        const a = d.data();
+        const ts = a.timestamp ? formatTimestamp(a.timestamp) : '';
+        return `
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div>
+              <div class="activity-text">${sanitize(a.details || a.action)}</div>
+              <div class="activity-time">${ts} · ${sanitize(a.adminEmail || '')}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Sin datos</div>';
+    }
+  }
+</script>
+</body>
+</html>
