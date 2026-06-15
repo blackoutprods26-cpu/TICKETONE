@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Entradas | TicketOne</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="nav-logo-mark">🎟</span>TicketOne</a>
+  <div class="nav-links">
+    <a href="/">Inicio</a><a href="/eventos">Eventos</a><a href="/mis-entradas" class="active">Mis Entradas</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button class="nav-hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="nav-mobile" id="nav-mobile">
+  <a href="/">🏠 Inicio</a><a href="/eventos">🎪 Eventos</a><a href="/mis-entradas">🎟 Mis Entradas</a>
+</div>
+
+<div class="page-pad">
+  <div class="container-s">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:48px;">
+      <div class="section-label" style="text-align:center;margin-bottom:8px;">Portal de entradas</div>
+      <h1 style="font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;">
+        Mis Entradas
+      </h1>
+      <p style="color:var(--text-2);font-size:0.95rem;">
+        Introduce tu correo electrónico para ver todas tus entradas.
+      </p>
+    </div>
+
+    <!-- Search Form -->
+    <div id="search-section">
+      <div class="booking-card" style="padding:32px;">
+        <div class="form-group">
+          <label class="form-label" for="search-email">Tu correo electrónico</label>
+          <div style="display:flex;gap:10px;">
+            <input class="form-input" type="email" id="search-email" placeholder="tu@correo.com" autocomplete="email" style="flex:1;">
+            <button class="btn btn-primary" onclick="searchTickets()" id="btn-search">Buscar</button>
+          </div>
+          <div class="form-hint">Usamos el correo con el que reservaste tus entradas.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" style="display:none;margin-top:32px;">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Resultados para</div>
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--accent-2);" id="result-email"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearSearch()">✕ Nueva búsqueda</button>
+      </div>
+
+      <!-- Loading -->
+      <div id="results-loading" style="text-align:center;padding:40px;color:var(--text-3);">
+        <div class="loading-spinner" style="margin:0 auto 12px;"></div>
+        Buscando tus entradas...
+      </div>
+
+      <!-- Empty -->
+      <div id="results-empty" style="display:none;" class="empty-state">
+        <div class="empty-state-icon">🎟</div>
+        <h3>No encontramos entradas</h3>
+        <p>No hay entradas asociadas a este correo electrónico.</p>
+        <a href="/eventos" class="btn btn-primary" style="margin-top:20px;">Explorar eventos</a>
+      </div>
+
+      <!-- Tickets List -->
+      <div id="tickets-list" style="display:flex;flex-direction:column;gap:16px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal" id="qr-modal">
+  <div class="modal-box" style="max-width:360px;text-align:center;">
+    <div class="modal-header">
+      <h3 class="modal-title">Código QR de acceso</h3>
+      <button class="modal-close" onclick="closeModal('qr-modal')">✕</button>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div id="modal-qr-container" style="display:inline-block;padding:16px;background:var(--bg-0);border:2px solid var(--accent);border-radius:var(--radius-m);"></div>
+    </div>
+    <div id="modal-ticket-id" style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--accent-2);letter-spacing:0.05em;margin-bottom:8px;"></div>
+    <div id="modal-event-name" style="font-size:0.9rem;color:var(--text-2);margin-bottom:20px;"></div>
+    <button class="btn btn-primary btn-full" onclick="downloadCurrentPDF()">⬇ Descargar PDF</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom" style="border-top:1px solid var(--border);padding-top:24px;">
+      <span>© 2025 TicketOne. Todos los derechos reservados.</span>
+      <div style="display:flex;gap:16px;"><a href="/legal/privacidad" style="color:var(--text-3)">Privacidad</a><a href="/legal/terminos" style="color:var(--text-3)">Términos</a></div>
+    </div>
+  </div>
+</footer>
+<div id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/email.js"></script>
+<script>
+  function toggleMobileMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+
+  let currentTicketForPDF = null;
+  let eventsCache = {};
+
+  // ── Search tickets by email ──────────────────────────
+  async function searchTickets() {
+    const emailInput = document.getElementById('search-email');
+    const email = emailInput.value.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('Introduce un correo electrónico válido.', 'error');
+      emailInput.classList.add('error');
+      return;
+    }
+    emailInput.classList.remove('error');
+
+    const btn = document.getElementById('btn-search');
+    btn.disabled = true;
+    btn.textContent = 'Buscando...';
+
+    document.getElementById('results-section').style.display = '';
+    document.getElementById('results-loading').style.display = '';
+    document.getElementById('results-empty').style.display = 'none';
+    document.getElementById('tickets-list').innerHTML = '';
+    document.getElementById('result-email').textContent = email;
+
+    try {
+      const snap = await db.collection('tickets')
+        .where('email', '==', email)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      document.getElementById('results-loading').style.display = 'none';
+
+      if (snap.empty) {
+        document.getElementById('results-empty').style.display = '';
+      } else {
+        const tickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await renderTickets(tickets);
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById('results-loading').style.display = 'none';
+      showToast('Error al buscar entradas. Inténtalo de nuevo.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Buscar';
+    }
+  }
+
+  // ── Get event data (cached) ──────────────────────────
+  async function getEvent(eventId) {
+    if (eventsCache[eventId]) return eventsCache[eventId];
+    try {
+      const doc = await db.collection('events').doc(eventId).get();
+      if (doc.exists) {
+        eventsCache[eventId] = { id: doc.id, ...doc.data() };
+        return eventsCache[eventId];
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ── Render Tickets ───────────────────────────────────
+  async function renderTickets(tickets) {
+    const container = document.getElementById('tickets-list');
+
+    for (const ticket of tickets) {
+      const event = await getEvent(ticket.eventId);
+      const item = buildTicketItem(ticket, event);
+      container.insertAdjacentHTML('beforeend', item);
+
+      // Generate QR
+      setTimeout(() => {
+        const qrEl = document.getElementById(`qr-${ticket.ticketId}`);
+        if (qrEl && ticket.status !== 'cancelled') {
+          try {
+            new QRCode(qrEl, {
+              text: ticket.ticketId,
+              width: 100,
+              height: 100,
+              colorDark: '#1A6EF7',
+              colorLight: '#03061A',
+              correctLevel: QRCode.CorrectLevel.H
+            });
+          } catch (_) {}
+        }
+      }, 100);
+    }
+  }
+
+  function getStatusBadge(ticket) {
+    if (ticket.status === 'cancelled') return '<span class="badge badge-danger">Cancelada</span>';
+    if (ticket.status === 'waiting')   return '<span class="badge badge-warning">Lista espera</span>';
+    if (ticket.used)                   return '<span class="badge badge-muted">Utilizada</span>';
+    return '<span class="badge badge-success">Válida</span>';
+  }
+
+  function buildTicketItem(ticket, event) {
+    const isWaiting   = ticket.status === 'waiting';
+    const isCancelled = ticket.status === 'cancelled';
+    const isUsed      = ticket.used;
+
+    const borderClass = isCancelled ? 'cancelled' : (isUsed ? 'used' : '');
+
+    return `
+      <div class="ticket-item ${borderClass}">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+            <div class="ticket-event-name">${sanitize(ticket.eventName || 'Evento')}</div>
+            ${getStatusBadge(ticket)}
+            ${isWaiting ? '<span class="badge badge-warning">En espera</span>' : ''}
+          </div>
+          <div class="ticket-meta">
+            <span>📅 ${event ? formatDate(event.date) : (ticket.eventDate ? formatDate(ticket.eventDate) : '—')}</span>
+            <span>🕐 ${event ? formatTime(event.time) : (ticket.eventTime ? formatTime(ticket.eventTime) : '—')}</span>
+            <span>📍 ${sanitize(event?.location || ticket.eventLocation || '—')}</span>
+            <span style="font-family:var(--font-display);letter-spacing:.06em;color:var(--accent-2);">
+              🎫 ${ticket.ticketId}
+            </span>
+          </div>
+          ${!isCancelled && !isWaiting ? `
+          <div class="ticket-actions">
+            <button class="btn btn-ghost btn-sm" onclick="showQRModal('${ticket.ticketId}', '${sanitize(ticket.eventName)}')">🔍 Ver QR</button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadTicketById('${ticket.ticketId}')">⬇ PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="resendEmail('${ticket.ticketId}')">📧 Reenviar</button>
+          </div>` : ''}
+        </div>
+        ${!isCancelled && !isWaiting ? `
+        <div class="ticket-qr-wrap">
+          <div id="qr-${ticket.ticketId}" style="width:100px;height:100px;"></div>
+          <span style="font-size:0.65rem;color:var(--text-3);">Código QR</span>
+        </div>` : `<div style="width:100px;text-align:center;color:var(--text-3);font-size:0.8rem;">${isCancelled ? '🚫' : '⏳'}</div>`}
+      </div>`;
+  }
+
+  // ── Show QR Modal ────────────────────────────────────
+  function showQRModal(ticketId, eventName) {
+    const container = document.getElementById('modal-qr-container');
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: ticketId,
+      width: 200,
+      height: 200,
+      colorDark: '#1A6EF7',
+      colorLight: '#03061A',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('modal-ticket-id').textContent = ticketId;
+    document.getElementById('modal-event-name').textContent = eventName;
+    currentTicketForPDF = ticketId;
+    openModal('qr-modal');
+  }
+
+  // ── Download ticket PDF by ID ────────────────────────
+  async function downloadTicketById(ticketId) {
+    showLoading('Generando PDF...');
+    try {
+      const doc = await db.collection('tickets').doc(ticketId).get();
+      if (!doc.exists) { showToast('Entrada no encontrada', 'error'); hideLoading(); return; }
+      const ticket = { id: doc.id, ...doc.data() };
+      const event = await getEvent(ticket.eventId);
+      await downloadTicketPDF(ticket, event || {
+        date: ticket.eventDate, time: ticket.eventTime, location: ticket.eventLocation
+      });
+    } catch (e) {
+      showToast('No se pudo generar el PDF.', 'error');
+    }
+    hideLoading();
+  }
+
+  async function downloadCurrentPDF() {
+    if (!currentTicketForPDF) return;
+    closeModal('qr-modal');
+    await downloadTicketById(currentTicketForPDF);
+  }
+
+  // ── Resend Email ─────────────────────────────────────
+  async function resendEmail(ticketId) {
+    showLoading('Reenviando correo...');
+    try {
+      const doc = await db.collection('tickets').doc(ticketId).get();
+      if (!doc.exists) throw new Error('No encontrado');
+      const ticket = { id: doc.id, ...doc.data() };
+      await resendTicketEmail(ticket);
+      showToast('Correo reenviado correctamente ✉️', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('No se pudo reenviar el correo.', 'error');
+    }
+    hideLoading();
+  }
+
+  // ── Clear search ─────────────────────────────────────
+  function clearSearch() {
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('search-email').value = '';
+    document.getElementById('tickets-list').innerHTML = '';
+    eventsCache = {};
+  }
+
+  // ── Init — check URL param ────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const emailParam = getParam('email');
+    if (emailParam) {
+      document.getElementById('search-email').value = decodeURIComponent(emailParam);
+      searchTickets();
+    }
+
+    document.getElementById('search-email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') searchTickets();
+    });
+  });
+</script>
+</body>
+</html>

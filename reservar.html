@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservar Entrada | TicketOne</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="nav-logo-mark">🎟</span>TicketOne</a>
+  <div class="nav-links">
+    <a href="/">Inicio</a><a href="/eventos" class="active">Eventos</a><a href="/mis-entradas">Mis Entradas</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button class="nav-hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="nav-mobile" id="nav-mobile">
+  <a href="/">🏠 Inicio</a><a href="/eventos">🎪 Eventos</a><a href="/mis-entradas">🎟 Mis Entradas</a>
+</div>
+
+<!-- Error State -->
+<div id="page-error" style="display:none" class="empty-state page-pad">
+  <div class="empty-state-icon">😕</div>
+  <h3>Evento no encontrado</h3>
+  <a href="/eventos" class="btn btn-primary" style="margin-top:20px;">Ver eventos</a>
+</div>
+
+<!-- Main Content -->
+<div id="page-content" style="display:none" class="page-pad">
+  <div class="container-s">
+
+    <!-- Back link -->
+    <a id="back-link" href="/eventos" style="display:inline-flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--text-3);margin-bottom:32px;transition:color var(--ease);" onmouseover="this.style.color='var(--text-1)'" onmouseout="this.style.color='var(--text-3)'">
+      ← Volver al evento
+    </a>
+
+    <!-- STEP 1: Form -->
+    <div id="step-form">
+      <!-- Event Summary -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-l);padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;">
+        <div id="event-thumb" style="width:72px;height:72px;border-radius:var(--radius-m);background:var(--bg-2);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:2rem;"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="section-label" style="margin-bottom:4px;">Reservando entrada para</div>
+          <div id="summary-title" style="font-family:var(--font-display);font-size:1.05rem;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="summary-meta" style="font-size:0.82rem;color:var(--text-3);margin-top:4px;"></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--success);">GRATIS</div>
+          <div id="summary-remaining" style="font-size:0.72rem;color:var(--text-3);"></div>
+        </div>
+      </div>
+
+      <!-- Waiting List Notice -->
+      <div id="waiting-notice" style="display:none;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius-m);padding:14px 18px;margin-bottom:24px;font-size:0.88rem;color:var(--warning);">
+        📋 <strong>Lista de espera.</strong> Este evento está completo. Déjanos tus datos y te avisaremos si se libera una plaza.
+      </div>
+
+      <div class="booking-card">
+        <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;margin-bottom:24px;">
+          Tus datos para la entrada
+        </h2>
+
+        <div class="form-group">
+          <label class="form-label" for="f-name">Nombre completo <span>*</span></label>
+          <input class="form-input" type="text" id="f-name" placeholder="Ej: María García López" autocomplete="name" required>
+          <div class="form-error" id="err-name">Por favor, introduce tu nombre completo.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-email">Correo electrónico <span>*</span></label>
+          <input class="form-input" type="email" id="f-email" placeholder="Ej: maria@correo.com" autocomplete="email" required>
+          <div class="form-hint">Recibirás tu entrada con código QR en este correo.</div>
+          <div class="form-error" id="err-email">Introduce un correo electrónico válido.</div>
+          <div class="form-error" id="err-duplicate">Ya tienes una entrada para este evento con este correo.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-phone">Teléfono <span style="font-weight:400;opacity:.6;">(opcional)</span></label>
+          <input class="form-input" type="tel" id="f-phone" placeholder="Ej: +34 600 000 000" autocomplete="tel">
+        </div>
+
+        <div style="background:var(--bg-1);border-radius:var(--radius-m);padding:14px 16px;font-size:0.8rem;color:var(--text-3);margin-bottom:24px;line-height:1.6;">
+          ✅ Tu entrada es completamente <strong style="color:var(--success)">gratuita</strong>. No se te pedirá ningún dato de pago.<br>
+          🔒 Tus datos se usarán únicamente para enviarte la entrada y gestionar el acceso al evento.
+          Al continuar aceptas nuestra <a href="/legal/privacidad" target="_blank" style="color:var(--accent-2)">política de privacidad</a>.
+        </div>
+
+        <button class="btn btn-primary btn-full btn-lg" id="btn-submit" onclick="submitBooking()">
+          🎟 Confirmar y recibir entrada
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Success -->
+    <div id="step-success" style="display:none;">
+      <div class="booking-card success-screen">
+        <div class="success-icon">✅</div>
+        <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:8px;">¡Entrada confirmada!</h2>
+        <p style="color:var(--text-2);margin-bottom:8px;">Hemos enviado tu entrada al correo</p>
+        <p style="font-weight:600;color:var(--accent-2);margin-bottom:28px;" id="success-email"></p>
+
+        <!-- Ticket Info -->
+        <div style="background:var(--bg-1);border:1px solid var(--border);border-radius:var(--radius-l);padding:20px;margin-bottom:24px;text-align:left;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+              <span style="color:var(--text-3);">Evento</span>
+              <span style="color:var(--text-1);font-weight:500;" id="s-event-name"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+              <span style="color:var(--text-3);">Fecha</span>
+              <span style="color:var(--text-1);" id="s-date"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+              <span style="color:var(--text-3);">Hora</span>
+              <span style="color:var(--text-1);" id="s-time"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+              <span style="color:var(--text-3);">Lugar</span>
+              <span style="color:var(--text-1);" id="s-location"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="qr-display">
+          <p style="font-size:0.82rem;color:var(--text-3);">Tu código QR de acceso</p>
+          <div class="qr-box">
+            <div id="qr-container"></div>
+          </div>
+          <div class="ticket-id" id="s-ticket-id"></div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px;">
+          <button class="btn btn-primary btn-full" onclick="downloadPDF()">⬇ Descargar entrada PDF</button>
+          <a href="/mis-entradas" class="btn btn-ghost btn-full">📋 Ver todas mis entradas</a>
+          <a href="/eventos" class="btn btn-ghost btn-full">🎪 Explorar más eventos</a>
+        </div>
+
+        <p style="font-size:0.75rem;color:var(--text-3);margin-top:20px;line-height:1.6;">
+          Muestra el QR en la entrada del evento. Si no recibes el correo, revisa la carpeta de spam o accede a <a href="/mis-entradas" style="color:var(--accent-2)">Mis Entradas</a>.
+        </p>
+      </div>
+    </div>
+
+    <!-- STEP 2 (Waiting): Waiting List Success -->
+    <div id="step-waiting-success" style="display:none;">
+      <div class="booking-card success-screen">
+        <div class="success-icon" style="border-color:var(--warning);background:rgba(245,166,35,0.1);">📋</div>
+        <h2 style="font-family:var(--font-display);font-size:1.5rem;font-weight:700;margin-bottom:8px;">¡Apuntado a la lista!</h2>
+        <p style="color:var(--text-2);margin-bottom:24px;">Te hemos añadido a la lista de espera. Te avisaremos en cuanto haya una plaza disponible.</p>
+        <a href="/eventos" class="btn btn-primary btn-full">Ver más eventos</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer" style="margin-top:40px;">
+  <div class="container">
+    <div class="footer-bottom" style="border:none;padding-top:0;">
+      <span>© 2025 TicketOne. Todos los derechos reservados.</span>
+      <div style="display:flex;gap:16px;"><a href="/legal/privacidad">Privacidad</a><a href="/legal/terminos">Términos</a></div>
+    </div>
+  </div>
+</footer>
+<div id="toast-container"></div>
+
+<!-- Libraries -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/email.js"></script>
+<script>
+  function toggleMobileMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+
+  let eventId = null;
+  let eventData = null;
+  let isWaiting = false;
+  let createdTicket = null;
+
+  // ── Load Event ─────────────────────────────────────────
+  async function loadEvent() {
+    eventId = getParam('id');
+    isWaiting = getParam('waiting') === '1';
+
+    if (!eventId) { showPageError(); return; }
+
+    try {
+      const doc = await db.collection('events').doc(eventId).get();
+      if (!doc.exists || !doc.data().published) { showPageError(); return; }
+      eventData = { id: doc.id, ...doc.data() };
+
+      // Back link
+      document.getElementById('back-link').href = `/evento?id=${eventId}`;
+
+      // Event thumb
+      const thumb = document.getElementById('event-thumb');
+      if (eventData.image) {
+        thumb.innerHTML = `<img src="${eventData.image}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        const emojis = {'Música':'🎵','Deportes':'⚽','Teatro y Artes':'🎭','Tecnología':'💻','Gastronomía':'🍴','Cine':'🎬','Infantil':'🧒','Networking':'🤝'};
+        thumb.textContent = emojis[eventData.category] || '🎪';
+      }
+
+      document.getElementById('summary-title').textContent = eventData.title;
+      document.getElementById('summary-meta').textContent = `📅 ${formatDate(eventData.date)} · 🕐 ${formatTime(eventData.time)} · 📍 ${eventData.location}`;
+      document.getElementById('summary-remaining').textContent = eventData.remaining > 0 ? `${eventData.remaining} plazas disponibles` : 'Aforo completo';
+
+      // Force waiting if capacity is 0
+      if (eventData.remaining === 0) isWaiting = true;
+      if (isWaiting) document.getElementById('waiting-notice').style.display = '';
+
+      document.getElementById('page-content').style.display = '';
+    } catch (e) {
+      console.error(e);
+      showPageError();
+    }
+  }
+
+  function showPageError() {
+    document.getElementById('page-error').style.display = '';
+  }
+
+  // ── Validation ─────────────────────────────────────────
+  function validateForm() {
+    let valid = true;
+
+    const name = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+
+    document.getElementById('err-name').classList.remove('show');
+    document.getElementById('err-email').classList.remove('show');
+    document.getElementById('err-duplicate').classList.remove('show');
+
+    if (name.length < 2) {
+      document.getElementById('err-name').classList.add('show');
+      document.getElementById('f-name').classList.add('error');
+      valid = false;
+    } else {
+      document.getElementById('f-name').classList.remove('error');
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('err-email').classList.add('show');
+      document.getElementById('f-email').classList.add('error');
+      valid = false;
+    } else {
+      document.getElementById('f-email').classList.remove('error');
+    }
+
+    return valid;
+  }
+
+  // ── Submit Booking ─────────────────────────────────────
+  async function submitBooking() {
+    if (!validateForm()) return;
+
+    const name  = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim().toLowerCase();
+    const phone = document.getElementById('f-phone').value.trim();
+    const btn   = document.getElementById('btn-submit');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Procesando...';
+
+    try {
+      // Re-fetch event to get latest capacity
+      const evDoc = await db.collection('events').doc(eventId).get();
+      if (!evDoc.exists) throw new Error('Evento no encontrado');
+      const ev = evDoc.data();
+
+      const isNowWaiting = ev.remaining === 0 || isWaiting;
+
+      // Check for duplicate ticket (non-cancelled)
+      if (!isNowWaiting) {
+        const dupSnap = await db.collection('tickets')
+          .where('email', '==', email)
+          .where('eventId', '==', eventId)
+          .get();
+
+        const activeDups = dupSnap.docs.filter(d => d.data().status !== 'cancelled');
+        if (activeDups.length > 0) {
+          document.getElementById('err-duplicate').classList.add('show');
+          document.getElementById('f-email').classList.add('error');
+          btn.disabled = false;
+          btn.textContent = '🎟 Confirmar y recibir entrada';
+          return;
+        }
+      }
+
+      // Generate ticket ID
+      const ticketId = generateTicketId();
+
+      // Ticket object
+      const ticket = {
+        ticketId,
+        eventId,
+        eventName: ev.title,
+        eventDate: ev.date,
+        eventTime: ev.time,
+        eventLocation: ev.location,
+        name,
+        email,
+        phone: phone || null,
+        status: isNowWaiting ? 'waiting' : 'active',
+        waitingList: isNowWaiting,
+        used: false,
+        usedAt: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      // Use transaction to safely decrement capacity
+      if (!isNowWaiting) {
+        await db.runTransaction(async (tx) => {
+          const evRef = db.collection('events').doc(eventId);
+          const fresh = await tx.get(evRef);
+          if (!fresh.exists) throw new Error('Evento no existe');
+          const remaining = fresh.data().remaining;
+          if (remaining <= 0) throw new Error('SIN_AFORO');
+          tx.update(evRef, { remaining: remaining - 1 });
+          tx.set(db.collection('tickets').doc(ticketId), ticket);
+        });
+      } else {
+        // Just save to waiting list
+        await db.collection('tickets').doc(ticketId).set(ticket);
+      }
+
+      createdTicket = ticket;
+
+      // Send email (non-blocking — don't let email failure break the booking)
+      if (!isNowWaiting) {
+        try {
+          await sendTicketEmail(ticket, ev);
+        } catch (emailErr) {
+          console.warn('Email send failed:', emailErr);
+          showToast('Entrada reservada. El correo de confirmación no pudo enviarse — guarda tu ID: ' + ticketId, 'warning', 8000);
+        }
+      }
+
+      showSuccess(ticket, ev, isNowWaiting);
+
+    } catch (e) {
+      console.error(e);
+      if (e.message === 'SIN_AFORO') {
+        showToast('Lo sentimos, el aforo se ha agotado mientras reservabas. Puedes apuntarte a la lista de espera.', 'error', 5000);
+        isWaiting = true;
+        document.getElementById('waiting-notice').style.display = '';
+      } else {
+        showToast('Error al procesar la reserva. Por favor, inténtalo de nuevo.', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = '🎟 Confirmar y recibir entrada';
+    }
+  }
+
+  // ── Show Success Screen ────────────────────────────────
+  function showSuccess(ticket, ev, waiting) {
+    document.getElementById('step-form').style.display = 'none';
+
+    if (waiting) {
+      document.getElementById('step-waiting-success').style.display = '';
+      return;
+    }
+
+    // Populate success
+    document.getElementById('success-email').textContent = ticket.email;
+    document.getElementById('s-event-name').textContent = ticket.eventName;
+    document.getElementById('s-date').textContent = formatDate(ev.date);
+    document.getElementById('s-time').textContent = formatTime(ev.time);
+    document.getElementById('s-location').textContent = ev.location;
+    document.getElementById('s-ticket-id').textContent = ticket.ticketId;
+
+    // Generate QR
+    generateQRCanvas('qr-container', ticket.ticketId, 180);
+
+    document.getElementById('step-success').style.display = '';
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Download PDF ───────────────────────────────────────
+  async function downloadPDF() {
+    if (!createdTicket || !eventData) return;
+    showLoading('Generando PDF...');
+    try {
+      await downloadTicketPDF(createdTicket, eventData);
+    } catch (e) {
+      showToast('No se pudo generar el PDF.', 'error');
+    }
+    hideLoading();
+  }
+
+  document.addEventListener('DOMContentLoaded', loadEvent);
+</script>
+</body>
+</html>
