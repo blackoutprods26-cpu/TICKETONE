@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Acceso | TicketOne Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body class="admin-body">
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="mark">🎟</span>
+    <div><span>TicketOne</span><span class="sub">Panel Admin</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Principal</div>
+    <a class="sidebar-link" href="/admin/"><span class="sidebar-link-icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/eventos"><span class="sidebar-link-icon">🎪</span> Eventos</a>
+    <a class="sidebar-link" href="/admin/entradas"><span class="sidebar-link-icon">🎟</span> Entradas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Herramientas</div>
+    <a class="sidebar-link active" href="/admin/scanner"><span class="sidebar-link-icon">📷</span> Control Acceso</a>
+    <a class="sidebar-link" href="/admin/estadisticas"><span class="sidebar-link-icon">📈</span> Estadísticas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Web</div>
+    <a class="sidebar-link" href="/" target="_blank"><span class="sidebar-link-icon">🌐</span> Ver web pública</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="admin-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-email" id="admin-email">Cargando...</div>
+        <div class="sidebar-user-role">Administrador</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 4px;">
+      <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()" style="border:none;">☀️</button>
+      <button class="sidebar-logout" onclick="doLogout()">🚪 Salir</button>
+    </div>
+  </div>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger-admin" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div class="admin-topbar-title">Control de Acceso</div>
+    </div>
+    <div class="admin-topbar-actions">
+      <span style="font-size:0.8rem;color:var(--text-3);" id="validations-count"></span>
+    </div>
+  </div>
+
+  <div class="admin-content">
+    <div class="scanner-wrap">
+
+      <!-- Mode Tabs -->
+      <div class="scanner-tabs">
+        <div class="scanner-tab active" onclick="switchMode('camera')" id="tab-camera">📱 Cámara</div>
+        <div class="scanner-tab" onclick="switchMode('manual')" id="tab-manual">⌨️ Manual</div>
+      </div>
+
+      <!-- ── CAMERA MODE ── -->
+      <div id="mode-camera">
+        <div id="qr-reader"></div>
+        <div style="text-align:center;margin-top:16px;" id="camera-controls">
+          <button class="btn btn-primary" onclick="startScanner()" id="btn-start-scan">▶ Iniciar escáner</button>
+          <button class="btn btn-ghost" onclick="stopScanner()" id="btn-stop-scan" style="display:none;">⏹ Detener</button>
+        </div>
+        <p style="text-align:center;font-size:0.8rem;color:var(--text-3);margin-top:12px;">
+          Funciona con la cámara del móvil o la webcam del ordenador. Concede permiso de cámara cuando se solicite.
+        </p>
+      </div>
+
+      <!-- ── MANUAL MODE ── -->
+      <div id="mode-manual" style="display:none;">
+        <div class="booking-card">
+          <h3 style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:20px;">Introducir ID manualmente</h3>
+          <div class="form-group">
+            <label class="form-label">ID de la entrada</label>
+            <input class="form-input" type="text" id="manual-id" placeholder="Ej: TKT-AB12CD34" style="text-transform:uppercase;font-family:var(--font-display);letter-spacing:.06em;">
+          </div>
+          <button class="btn btn-primary btn-full btn-lg" onclick="validateManual()">🔍 Validar entrada</button>
+        </div>
+      </div>
+
+      <!-- ── RESULT ── -->
+      <div id="scan-result" style="margin-top:24px;"></div>
+
+      <!-- ── RECENT VALIDATIONS ── -->
+      <div style="margin-top:32px;">
+        <div class="section-label" style="margin-bottom:12px;">Validaciones recientes</div>
+        <div class="activity-list" id="recent-validations" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-l);padding:0 20px;">
+          <div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Sin validaciones todavía</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('active'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('active'); }
+  async function doLogout() { await auth.signOut(); window.location.href = '/admin/login'; }
+
+  let html5QrCode = null;
+  let isScanning = false;
+  let validationsToday = 0;
+
+  requireAdmin('/admin/login').then(user => {
+    document.getElementById('admin-email').textContent = user.email;
+    document.getElementById('admin-avatar').textContent = user.email.charAt(0).toUpperCase();
+    loadRecentValidations();
+  }).catch(() => {});
+
+  // ── Mode Switching ────────────────────────────────────
+  function switchMode(mode) {
+    document.getElementById('tab-camera').classList.toggle('active', mode === 'camera');
+    document.getElementById('tab-manual').classList.toggle('active', mode === 'manual');
+    document.getElementById('mode-camera').style.display = mode === 'camera' ? '' : 'none';
+    document.getElementById('mode-manual').style.display = mode === 'manual' ? '' : 'none';
+
+    if (mode === 'manual' && isScanning) stopScanner();
+    document.getElementById('scan-result').innerHTML = '';
+  }
+
+  // ── Camera Scanner ─────────────────────────────────────
+  function startScanner() {
+    if (isScanning) return;
+
+    if (typeof Html5Qrcode === 'undefined') {
+      showToast('Librería de escáner no cargada. Recarga la página.', 'error');
+      return;
+    }
+
+    html5QrCode = new Html5Qrcode('qr-reader');
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    const onCameraOK = () => {
+      isScanning = true;
+      document.getElementById('btn-start-scan').style.display = 'none';
+      document.getElementById('btn-stop-scan').style.display = '';
+    };
+
+    const onCameraFail = (err) => {
+      console.error('Camera error:', err);
+      const denied = err && (String(err).includes('Permission') || String(err).includes('NotAllowed'));
+      showToast(
+        denied
+          ? 'Permiso de cámara denegado. Actívalo en el navegador (icono de candado en la barra de dirección) y recarga.'
+          : 'No se pudo iniciar la cámara. Asegúrate de estar en HTTPS y de haber concedido permiso.',
+        'error', 6000
+      );
+    };
+
+    // 1) Try rear/environment camera (mobile)
+    // 2) Fall back to front camera
+    // 3) Fall back to any available camera
+    html5QrCode
+      .start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
+      .then(onCameraOK)
+      .catch(() => {
+        html5QrCode
+          .start({ facingMode: 'user' }, config, onScanSuccess, () => {})
+          .then(onCameraOK)
+          .catch(onCameraFail);
+      });
+  }
+
+  function stopScanner() {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+        isScanning = false;
+        document.getElementById('btn-start-scan').style.display = '';
+        document.getElementById('btn-stop-scan').style.display = 'none';
+      }).catch(() => {});
+    }
+  }
+
+  let lastScanned = '';
+  let lastScanTime = 0;
+
+  function onScanSuccess(decodedText) {
+    // Debounce duplicate scans
+    const now = Date.now();
+    if (decodedText === lastScanned && now - lastScanTime < 4000) return;
+    lastScanned = decodedText;
+    lastScanTime = now;
+
+    // Beep feedback
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      osc.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.start();
+      setTimeout(() => osc.stop(), 100);
+    } catch (_) {}
+
+    validateTicket(decodedText.trim());
+  }
+
+  // ── Manual Validation ──────────────────────────────────
+  function validateManual() {
+    const id = document.getElementById('manual-id').value.trim().toUpperCase();
+    if (!id) { showToast('Introduce un ID válido.', 'error'); return; }
+    validateTicket(id);
+  }
+
+  document.getElementById('manual-id').addEventListener('keydown', e => { if (e.key === 'Enter') validateManual(); });
+
+  // ── Core Validation Logic ────────────────────────────
+  async function validateTicket(ticketId) {
+    const resultBox = document.getElementById('scan-result');
+    resultBox.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);"><div class="loading-spinner" style="margin:0 auto 12px;"></div>Verificando entrada...</div>`;
+
+    try {
+      const docRef = db.collection('tickets').doc(ticketId);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        renderResult('invalid', { ticketId });
+        return;
+      }
+
+      const ticket = { id: doc.id, ...doc.data() };
+
+      if (ticket.status === 'cancelled') {
+        renderResult('cancelled', ticket);
+        return;
+      }
+
+      if (ticket.status === 'waiting') {
+        renderResult('waiting', ticket);
+        return;
+      }
+
+      if (ticket.used) {
+        renderResult('used', ticket);
+        return;
+      }
+
+      renderResult('valid', ticket);
+
+    } catch (e) {
+      console.error(e);
+      resultBox.innerHTML = `<div class="scanner-result invalid"><span class="scanner-emoji">⚠️</span><div class="scanner-status" style="color:var(--danger)">ERROR DE CONEXIÓN</div><div class="scanner-info">No se pudo verificar la entrada. Inténtalo de nuevo.</div></div>`;
+    }
+  }
+
+  function renderResult(type, ticket) {
+    const resultBox = document.getElementById('scan-result');
+    let html = '';
+
+    if (type === 'invalid') {
+      html = `
+        <div class="scanner-result invalid">
+          <span class="scanner-emoji">❌</span>
+          <div class="scanner-status" style="color:var(--danger)">ENTRADA INVÁLIDA</div>
+          <div class="scanner-info">No existe ninguna entrada con el ID: <strong>${sanitize(ticket.ticketId)}</strong></div>
+        </div>`;
+    } else if (type === 'used') {
+      html = `
+        <div class="scanner-result used">
+          <span class="scanner-emoji">❌</span>
+          <div class="scanner-status" style="color:var(--danger)">ENTRADA YA UTILIZADA</div>
+          <div class="scanner-info">
+            <strong>${sanitize(ticket.name)}</strong> · ${sanitize(ticket.eventName)}<br>
+            ID: ${ticket.ticketId}<br>
+            ${ticket.usedAt ? `Validada el: ${formatTimestamp(ticket.usedAt)}` : ''}
+          </div>
+        </div>`;
+    } else if (type === 'cancelled') {
+      html = `
+        <div class="scanner-result invalid">
+          <span class="scanner-emoji">🚫</span>
+          <div class="scanner-status" style="color:var(--danger)">ENTRADA CANCELADA</div>
+          <div class="scanner-info">
+            <strong>${sanitize(ticket.name)}</strong> · ${sanitize(ticket.eventName)}<br>
+            ID: ${ticket.ticketId}<br>
+            Esta entrada fue cancelada y ya no es válida para el acceso.
+          </div>
+        </div>`;
+    } else if (type === 'waiting') {
+      html = `
+        <div class="scanner-result invalid">
+          <span class="scanner-emoji">📋</span>
+          <div class="scanner-status" style="color:var(--warning)">EN LISTA DE ESPERA</div>
+          <div class="scanner-info">
+            <strong>${sanitize(ticket.name)}</strong> · ${sanitize(ticket.eventName)}<br>
+            ID: ${ticket.ticketId}<br>
+            Esta entrada está en lista de espera y no tiene acceso confirmado.
+          </div>
+        </div>`;
+    } else if (type === 'valid') {
+      html = `
+        <div class="scanner-result valid">
+          <span class="scanner-emoji">✅</span>
+          <div class="scanner-status" style="color:var(--success)">ENTRADA VÁLIDA</div>
+          <div class="scanner-info" style="margin-bottom:20px;">
+            <strong style="font-size:1.05rem;display:block;margin-bottom:6px;color:var(--text-1);">${sanitize(ticket.name)}</strong>
+            🎪 ${sanitize(ticket.eventName)}<br>
+            📅 ${ticket.eventDate ? formatDate(ticket.eventDate) : ''}<br>
+            🎫 ${ticket.ticketId}
+          </div>
+          <button class="btn btn-success btn-lg" onclick="confirmAccess('${ticket.id}')" id="btn-validate-access">
+            ✅ Validar acceso
+          </button>
+        </div>`;
+    }
+
+    resultBox.innerHTML = html;
+  }
+
+  // ── Confirm Access (mark used = true) ────────────────
+  async function confirmAccess(ticketId) {
+    const btn = document.getElementById('btn-validate-access');
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
+
+    try {
+      const doc = await db.collection('tickets').doc(ticketId).get();
+      if (!doc.exists) { showToast('La entrada ya no existe.', 'error'); return; }
+      const ticket = doc.data();
+
+      if (ticket.used) {
+        renderResult('used', { id: ticketId, ...ticket });
+        return;
+      }
+
+      await db.collection('tickets').doc(ticketId).update({
+        used: true,
+        usedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await logActivity('validate_access', `Validó el acceso de ${ticket.name} (${ticket.ticketId}) — ${ticket.eventName}`);
+
+      validationsToday++;
+      document.getElementById('validations-count').textContent = `${validationsToday} validaciones en esta sesión`;
+
+      // Show confirmed
+      const resultBox = document.getElementById('scan-result');
+      resultBox.innerHTML = `
+        <div class="scanner-result valid">
+          <span class="scanner-emoji">🎉</span>
+          <div class="scanner-status" style="color:var(--success)">ACCESO VALIDADO</div>
+          <div class="scanner-info">
+            <strong>${sanitize(ticket.name)}</strong> ha accedido correctamente a<br>
+            ${sanitize(ticket.eventName)}
+          </div>
+        </div>`;
+
+      loadRecentValidations();
+
+      // Clear manual input
+      document.getElementById('manual-id').value = '';
+
+      // Auto-clear result after 3.5s if scanning
+      if (isScanning) {
+        setTimeout(() => { resultBox.innerHTML = ''; }, 3500);
+      }
+
+    } catch (e) {
+      console.error(e);
+      showToast('Error al validar el acceso.', 'error');
+      btn.disabled = false;
+      btn.textContent = '✅ Validar acceso';
+    }
+  }
+
+  // ── Recent Validations List ──────────────────────────
+  async function loadRecentValidations() {
+    const container = document.getElementById('recent-validations');
+    try {
+      // Single filter + client-side sort to avoid composite index requirement
+      const snap = await db.collection('tickets')
+        .where('used', '==', true)
+        .limit(50)
+        .get();
+
+      if (snap.empty) {
+        container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Sin validaciones todavía</div>';
+        return;
+      }
+
+      // Sort by usedAt client-side
+      const sorted = snap.docs
+        .map(d => ({ _id: d.id, ...d.data() }))
+        .sort((a, b) => (b.usedAt?.seconds || 0) - (a.usedAt?.seconds || 0))
+        .slice(0, 10);
+
+      container.innerHTML = sorted.map(t => {
+        return `
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--success);"></div>
+            <div>
+              <div class="activity-text"><strong>${sanitize(t.name)}</strong> · ${sanitize(t.eventName)}</div>
+              <div class="activity-time">${t.usedAt ? formatTimestamp(t.usedAt) : ''} · ${t.ticketId}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:20px;">Sin datos</div>';
+    }
+  }
+
+  // Cleanup on leave
+  window.addEventListener('beforeunload', () => { if (isScanning) stopScanner(); });
+</script>
+</body>
+</html>
