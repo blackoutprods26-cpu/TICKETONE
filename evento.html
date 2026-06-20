@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evento | TicketOne</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo"><span class="nav-logo-mark">🎟</span>TicketOne</a>
+  <div class="nav-links">
+    <a href="/">Inicio</a>
+    <a href="/eventos" class="active">Eventos</a>
+    <a href="/mis-entradas">Mis Entradas</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button class="nav-hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="nav-mobile" id="nav-mobile">
+  <a href="/">🏠 Inicio</a><a href="/eventos">🎪 Eventos</a><a href="/mis-entradas">🎟 Mis Entradas</a>
+</div>
+
+<!-- Loading State -->
+<div id="page-loading" style="text-align:center;padding:100px 20px;">
+  <div class="loading-spinner" style="margin:0 auto 16px;"></div>
+  <p style="color:var(--text-3);">Cargando evento...</p>
+</div>
+
+<!-- Error State -->
+<div id="page-error" style="display:none" class="empty-state page-pad">
+  <div class="empty-state-icon">😕</div>
+  <h3>Evento no encontrado</h3>
+  <p>Este evento no existe o ha sido eliminado.</p>
+  <a href="/eventos" class="btn btn-primary" style="margin-top:20px;">Ver todos los eventos</a>
+</div>
+
+<!-- Event Content -->
+<div id="event-content" style="display:none;">
+
+  <!-- Hero -->
+  <div class="event-hero" id="event-hero">
+    <img class="event-hero-img" id="event-img" src="" alt="">
+    <div id="event-hero-placeholder" style="display:none;width:100%;height:100%;background:linear-gradient(135deg,var(--bg-1),var(--bg-3));display:flex;align-items:center;justify-content:center;font-size:5rem;" id="event-hero-emoji">🎪</div>
+    <div class="event-hero-overlay"></div>
+  </div>
+
+  <div class="container">
+    <!-- Breadcrumb -->
+    <div style="margin:20px 0 0;font-size:0.82rem;color:var(--text-3);display:flex;align-items:center;gap:8px;">
+      <a href="/" style="color:var(--text-3);transition:color var(--ease);" onmouseover="this.style.color='var(--accent-2)'" onmouseout="this.style.color='var(--text-3)'">Inicio</a>
+      <span>›</span>
+      <a href="/eventos" style="color:var(--text-3);transition:color var(--ease);" onmouseover="this.style.color='var(--accent-2)'" onmouseout="this.style.color='var(--text-3)'">Eventos</a>
+      <span>›</span>
+      <span id="bc-title" style="color:var(--text-2);">...</span>
+    </div>
+
+    <div class="event-detail-layout">
+      <!-- Left: Info -->
+      <div>
+        <div style="margin:24px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="chip" id="event-category"></span>
+          <span class="badge badge-success">ENTRADA GRATUITA</span>
+        </div>
+        <h1 id="event-title" style="font-family:var(--font-display);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:20px;"></h1>
+
+        <!-- Description -->
+        <div id="event-description" style="color:var(--text-2);line-height:1.8;font-size:0.97rem;margin-bottom:32px;"></div>
+
+        <!-- Share -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:40px;flex-wrap:wrap;">
+          <span style="font-size:0.82rem;color:var(--text-3);">Compartir:</span>
+          <button class="btn btn-ghost btn-sm" onclick="shareEvent('whatsapp')">💬 WhatsApp</button>
+          <button class="btn btn-ghost btn-sm" onclick="shareEvent('copy')">🔗 Copiar enlace</button>
+        </div>
+
+        <!-- Related events placeholder -->
+        <div id="related-section" style="display:none;">
+          <hr class="divider">
+          <div class="section-label" style="margin-bottom:12px;">Otros eventos</div>
+          <div class="grid-events" id="related-events" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));"></div>
+        </div>
+      </div>
+
+      <!-- Right: Booking Card -->
+      <div>
+        <div class="event-info-card" id="booking-card">
+          <!-- Capacity -->
+          <div style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:0.82rem;font-weight:600;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;">Aforo</span>
+              <span id="remaining-label" style="font-size:0.82rem;font-weight:600;"></span>
+            </div>
+            <div class="capacity-bar" style="height:6px;">
+              <div class="capacity-bar-fill" id="capacity-bar-fill" style="width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:0.72rem;color:var(--text-3);">
+              <span id="remaining-count"></span>
+              <span id="total-capacity"></span>
+            </div>
+          </div>
+
+          <!-- Event Details -->
+          <div class="event-info-row">
+            <span class="event-info-icon">📅</span>
+            <div class="event-info-text">
+              <strong id="info-date"></strong>
+              <span style="font-size:0.8rem;color:var(--text-3);">Fecha del evento</span>
+            </div>
+          </div>
+          <div class="event-info-row">
+            <span class="event-info-icon">🕐</span>
+            <div class="event-info-text">
+              <strong id="info-time"></strong>
+              <span style="font-size:0.8rem;color:var(--text-3);">Hora de inicio</span>
+            </div>
+          </div>
+          <div class="event-info-row">
+            <span class="event-info-icon">📍</span>
+            <div class="event-info-text">
+              <strong id="info-location"></strong>
+              <span style="font-size:0.8rem;color:var(--text-3);">Lugar del evento</span>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;">
+            <button class="btn btn-primary btn-full btn-lg" id="btn-book">
+              🎟 Conseguir entrada gratuita
+            </button>
+            <div id="btn-waiting" style="display:none;">
+              <button class="btn btn-ghost btn-full btn-lg" onclick="location.href='/reservar?id='+eventId+'&waiting=1'">
+                📋 Apuntarme a la lista de espera
+              </button>
+              <p style="font-size:0.78rem;color:var(--text-3);text-align:center;margin-top:8px;">El aforo está completo. Te avisaremos si se libera alguna plaza.</p>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-3);text-align:center;margin-top:12px;">
+              🔒 Gratis · Sin registro · Confirmación inmediata por email
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="font-size:1.1rem;"><span class="nav-logo-mark">🎟</span>TicketOne</div>
+        <p>Tu plataforma de referencia para acceder a los mejores eventos de forma completamente gratuita.</p>
+      </div>
+      <div class="footer-col"><h4>Plataforma</h4><a href="/">Inicio</a><a href="/eventos">Eventos</a><a href="/mis-entradas">Mis entradas</a></div>
+      <div class="footer-col"><h4>Legal</h4><a href="/legal/privacidad">Privacidad</a><a href="/legal/terminos">Términos</a><a href="/legal/cookies">Cookies</a></div>
+      <div class="footer-col"><h4>Sistema</h4><a href="/admin/login">Acceso administrador</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 TicketOne. Todos los derechos reservados.</span>
+    </div>
+  </div>
+</footer>
+<div id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+  function toggleMobileMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+
+  let eventId = null;
+  let eventData = null;
+
+  function categoryEmoji(cat) {
+    const m = {'Música':'🎵','Deportes':'⚽','Teatro y Artes':'🎭','Tecnología':'💻','Gastronomía':'🍴','Cine':'🎬','Infantil':'🧒','Networking':'🤝'};
+    return m[cat] || '🎪';
+  }
+
+  function shareEvent(type) {
+    const url = window.location.href;
+    const text = `¡Mira este evento en TicketOne! ${eventData?.title || ''} — ${url}`;
+    if (type === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    if (type === 'copy') {
+      navigator.clipboard.writeText(url).then(() => showToast('Enlace copiado al portapapeles', 'success'));
+    }
+  }
+
+  async function loadEvent() {
+    eventId = getParam('id');
+    if (!eventId) { showError(); return; }
+
+    try {
+      const doc = await db.collection('events').doc(eventId).get();
+      if (!doc.exists || !doc.data().published) { showError(); return; }
+
+      eventData = { id: doc.id, ...doc.data() };
+      renderEvent(eventData);
+
+      // Real-time listener for capacity
+      db.collection('events').doc(eventId).onSnapshot(snap => {
+        if (snap.exists) {
+          const d = snap.data();
+          updateCapacity(d.remaining, d.capacity);
+        }
+      });
+
+    } catch (e) {
+      console.error(e);
+      showError();
+    }
+  }
+
+  function showError() {
+    document.getElementById('page-loading').style.display = 'none';
+    document.getElementById('page-error').style.display = '';
+  }
+
+  function updateCapacity(remaining, capacity) {
+    const pct = capacity > 0 ? Math.round((remaining / capacity) * 100) : 0;
+    const color = getCapacityColor(remaining, capacity);
+    const bar = document.getElementById('capacity-bar-fill');
+    const label = document.getElementById('remaining-label');
+    const count = document.getElementById('remaining-count');
+    const total = document.getElementById('total-capacity');
+    const btnBook = document.getElementById('btn-book');
+    const btnWait = document.getElementById('btn-waiting');
+
+    if (bar) { bar.style.width = pct + '%'; bar.style.background = color; }
+    if (label) { label.textContent = getCapacityLabel(remaining); label.style.color = color; }
+    if (count) count.textContent = `${remaining} disponibles`;
+    if (total) total.textContent = `${capacity} total`;
+
+    if (remaining === 0) {
+      btnBook.style.display = 'none';
+      btnWait.style.display = '';
+    } else {
+      btnBook.style.display = '';
+      btnWait.style.display = 'none';
+    }
+  }
+
+  function renderEvent(ev) {
+    document.title = `${ev.title} | TicketOne`;
+    document.getElementById('bc-title').textContent = ev.title;
+
+    // Hero image
+    if (ev.image) {
+      document.getElementById('event-img').src = ev.image;
+      document.getElementById('event-img').alt = ev.title;
+      document.getElementById('event-hero-placeholder').style.display = 'none';
+    } else {
+      document.getElementById('event-img').style.display = 'none';
+      const ph = document.getElementById('event-hero-placeholder');
+      ph.style.display = 'flex';
+      ph.textContent = categoryEmoji(ev.category);
+    }
+
+    document.getElementById('event-category').textContent = ev.category || 'Evento';
+    document.getElementById('event-title').textContent = ev.title;
+    document.getElementById('event-description').textContent = ev.description || '';
+
+    // Info
+    document.getElementById('info-date').textContent = formatDate(ev.date);
+    document.getElementById('info-time').textContent = formatTime(ev.time);
+    document.getElementById('info-location').textContent = ev.location;
+
+    updateCapacity(ev.remaining, ev.capacity);
+
+    // Book button
+    document.getElementById('btn-book').onclick = () => {
+      window.location.href = `/reservar?id=${eventId}`;
+    };
+
+    // Show content
+    document.getElementById('page-loading').style.display = 'none';
+    document.getElementById('event-content').style.display = '';
+
+    // Load related (same category)
+    loadRelated(ev.category, ev.id);
+  }
+
+  async function loadRelated(category, excludeId) {
+    if (!category) return;
+    try {
+      const snap = await db.collection('events')
+        .where('published', '==', true)
+        .where('category', '==', category)
+        .limit(4)
+        .get();
+
+      const docs = snap.docs
+        .filter(d => d.id !== excludeId)
+        .map(d => ({ id: d.id, ...d.data() }))
+        .slice(0, 3);
+
+      if (!docs.length) return;
+
+      const container = document.getElementById('related-events');
+      container.innerHTML = docs.map(ev => `
+        <article class="event-card" onclick="location.href='/evento?id=${ev.id}'">
+          <div class="event-card-img">
+            ${ev.image ? `<img src="${sanitize(ev.image)}" alt="${sanitize(ev.title)}" loading="lazy">` : `<div class="no-image" style="font-size:2rem">${categoryEmoji(ev.category)}</div>`}
+            <span class="event-card-free">GRATIS</span>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-meta"><span>📅 ${formatDateShort(ev.date)}</span></div>
+            <div class="event-card-title">${sanitize(ev.title)}</div>
+            <div class="event-card-loc">📍 ${sanitize(ev.location)}</div>
+          </div>
+        </article>`).join('');
+
+      document.getElementById('related-section').style.display = '';
+    } catch (_) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', loadEvent);
+</script>
+</body>
+</html>

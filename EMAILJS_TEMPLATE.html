@@ -1,0 +1,129 @@
+<!--
+  ═══════════════════════════════════════════════════════════════
+  PLANTILLA DE EMAILJS — TicketOne
+  ═══════════════════════════════════════════════════════════════
+
+  INSTRUCCIONES:
+  1. Ve a https://dashboard.emailjs.com/admin/templates
+  2. Abre tu plantilla con ID: template_a3yctcf
+     (o crea una nueva con ese mismo ID si no existe)
+  3. En el campo "Subject" (Asunto), pega:
+
+     Tu entrada para {{event_name}}
+
+  4. En el campo "Content" (cuerpo del email), activa el modo
+     "Code editor" / HTML y pega TODO el código de abajo.
+
+  5. Asegúrate de que el "To email" del template apunta a:
+     {{to_email}}
+
+  6. Guarda la plantilla.
+
+  Variables utilizadas por la aplicación (ya las envía el código):
+    {{to_name}}        → Nombre del asistente
+    {{to_email}}       → Email del asistente
+    {{event_name}}     → Nombre del evento
+    {{event_date}}     → Fecha formateada
+    {{event_time}}     → Hora formateada
+    {{event_location}} → Ubicación del evento
+    {{ticket_id}}      → ID único de la entrada
+    {{qr_image_url}}   → URL de la imagen del código QR
+    {{ticket_url}}     → Enlace a "Mis Entradas"
+
+  ═══════════════════════════════════════════════════════════════
+-->
+
+<div style="background-color:#03061A; padding: 32px 16px; font-family: 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" style="max-width:520px; margin:0 auto; background-color:#0B1A30; border-radius:20px; overflow:hidden; border:1px solid #1A2A45;">
+
+    <!-- Header -->
+    <tr>
+      <td style="background-color:#1A6EF7; padding: 28px 32px; text-align:center;">
+        <div style="font-size:22px; font-weight:700; color:#ffffff; letter-spacing:-0.5px; font-family: Arial, sans-serif;">
+          🎟 TicketOne
+        </div>
+        <div style="font-size:12px; color:#E8EEFF; margin-top:4px; letter-spacing:1px; text-transform:uppercase;">
+          Entrada Gratuita Confirmada
+        </div>
+      </td>
+    </tr>
+
+    <!-- Body -->
+    <tr>
+      <td style="padding: 32px;">
+        <p style="color:#E8EEFF; font-size:16px; margin:0 0 8px;">Hola <strong>{{to_name}}</strong>,</p>
+        <p style="color:#8FA3C9; font-size:14px; line-height:1.6; margin:0 0 24px;">
+          ¡Tu entrada gratuita ha sido confirmada! A continuación encontrarás todos los detalles
+          de tu evento y tu código QR de acceso.
+        </p>
+
+        <!-- Event Card -->
+        <table role="presentation" width="100%" style="background-color:#03061A; border-radius:14px; border:1px solid #1A2A45; margin-bottom:24px;">
+          <tr>
+            <td style="padding: 20px 24px;">
+              <div style="font-size:18px; font-weight:700; color:#E8EEFF; margin-bottom:16px; font-family: Arial, sans-serif;">
+                {{event_name}}
+              </div>
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="padding:6px 0; color:#4A6080; font-size:12px; text-transform:uppercase; letter-spacing:1px; width:90px;">📅 Fecha</td>
+                  <td style="padding:6px 0; color:#E8EEFF; font-size:14px;">{{event_date}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#4A6080; font-size:12px; text-transform:uppercase; letter-spacing:1px;">🕐 Hora</td>
+                  <td style="padding:6px 0; color:#E8EEFF; font-size:14px;">{{event_time}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#4A6080; font-size:12px; text-transform:uppercase; letter-spacing:1px;">📍 Lugar</td>
+                  <td style="padding:6px 0; color:#E8EEFF; font-size:14px;">{{event_location}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- QR Code -->
+        <table role="presentation" width="100%">
+          <tr>
+            <td style="text-align:center; padding-bottom:16px;">
+              <div style="display:inline-block; background-color:#03061A; border:2px solid #1A6EF7; border-radius:14px; padding:16px;">
+                <img src="{{qr_image_url}}" width="180" height="180" alt="Código QR de tu entrada" style="display:block; border-radius:6px;">
+              </div>
+              <div style="margin-top:14px; font-size:18px; font-weight:700; color:#4A8FFF; letter-spacing:2px; font-family: Arial, sans-serif;">
+                {{ticket_id}}
+              </div>
+              <div style="font-size:12px; color:#4A6080; margin-top:4px;">
+                Presenta este código QR en la entrada del evento
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table role="presentation" width="100%" style="margin-top:8px;">
+          <tr>
+            <td style="text-align:center;">
+              <a href="{{ticket_url}}" style="display:inline-block; background-color:#1A6EF7; color:#ffffff; text-decoration:none; font-weight:700; font-size:14px; padding:14px 32px; border-radius:12px; font-family: Arial, sans-serif;">
+                Ver mi entrada
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="color:#4A6080; font-size:12px; line-height:1.6; margin-top:28px; text-align:center;">
+          Esta entrada es gratuita, personal e intransferible.<br>
+          Si no solicitaste esta entrada, puedes ignorar este correo.
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color:#070D2A; padding:20px 32px; text-align:center; border-top:1px solid #1A2A45;">
+        <div style="font-size:12px; color:#4A6080;">
+          © 2025 TicketOne · Entradas gratuitas para los mejores eventos
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
