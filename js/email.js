@@ -4,7 +4,7 @@
 
 const EMAILJS_SERVICE_ID  = 'service_uiug5ka';
 const EMAILJS_TEMPLATE_ID = 'template_a3yctcf';
-const EMAILJS_PUBLIC_KEY  = 'KlZH4N10G0jLy-qGL';
+const EMAILJS_PUBLIC_KEY  = 'FNCEXVM2aEdcN1h42';
 
 let _emailjsReady = false;
 
