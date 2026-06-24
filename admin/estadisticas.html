@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estadísticas | TicketOne Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>">
+</head>
+<body class="admin-body">
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="mark">🎟</span>
+    <div><span>TicketOne</span><span class="sub">Panel Admin</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Principal</div>
+    <a class="sidebar-link" href="/admin/"><span class="sidebar-link-icon">📊</span> Dashboard</a>
+    <a class="sidebar-link" href="/admin/eventos"><span class="sidebar-link-icon">🎪</span> Eventos</a>
+    <a class="sidebar-link" href="/admin/entradas"><span class="sidebar-link-icon">🎟</span> Entradas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Herramientas</div>
+    <a class="sidebar-link" href="/admin/scanner"><span class="sidebar-link-icon">📷</span> Control Acceso</a>
+    <a class="sidebar-link active" href="/admin/estadisticas"><span class="sidebar-link-icon">📈</span> Estadísticas</a>
+    <div class="sidebar-section-label" style="margin-top:16px;">Web</div>
+    <a class="sidebar-link" href="/" target="_blank"><span class="sidebar-link-icon">🌐</span> Ver web pública</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="admin-avatar">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-email" id="admin-email">Cargando...</div>
+        <div class="sidebar-user-role">Administrador</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 4px;">
+      <button class="btn-theme" id="theme-toggle" onclick="toggleTheme()" style="border:none;">☀️</button>
+      <button class="sidebar-logout" onclick="doLogout()">🚪 Salir</button>
+    </div>
+  </div>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger-admin" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div class="admin-topbar-title">Estadísticas</div>
+    </div>
+    <div class="admin-topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exportStatsCSV()">⬇ Exportar CSV</button>
+    </div>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- Global Stats -->
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <div class="asc-icon">🎟</div>
+        <div class="asc-label">Entradas emitidas</div>
+        <div class="asc-value" id="g-issued">—</div>
+      </div>
+      <div class="admin-stat-card success">
+        <div class="asc-icon">✅</div>
+        <div class="asc-label">Validadas</div>
+        <div class="asc-value" id="g-validated">—</div>
+        <div class="asc-sub" id="g-validated-pct"></div>
+      </div>
+      <div class="admin-stat-card warning">
+        <div class="asc-icon">📊</div>
+        <div class="asc-label">Ocupación media</div>
+        <div class="asc-value" id="g-occupancy">—</div>
+      </div>
+      <div class="admin-stat-card danger">
+        <div class="asc-icon">📋</div>
+        <div class="asc-label">En lista de espera</div>
+        <div class="asc-value" id="g-waiting">—</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">Entradas emitidas por evento</div>
+        <div class="chart-container"><canvas id="chart-issued"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Validadas vs. pendientes por evento</div>
+        <div class="chart-container"><canvas id="chart-validated"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Distribución por categoría</div>
+        <div class="chart-container"><canvas id="chart-category"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Porcentaje de ocupación por evento</div>
+        <div class="chart-container"><canvas id="chart-occupancy"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Per-event table -->
+    <div class="table-wrap" style="margin-bottom:24px;">
+      <div class="table-toolbar">
+        <div class="table-toolbar-title">Detalle por evento</div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Evento</th><th>Fecha</th><th>Aforo</th><th>Emitidas</th><th>Validadas</th><th>Ocupación</th></tr>
+          </thead>
+          <tbody id="stats-table-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:32px;">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Full Activity Log -->
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="table-toolbar-title">📜 Registro de actividad e historial de validaciones</div>
+      </div>
+      <div class="activity-list" id="full-activity-log" style="padding:8px 20px;max-height:480px;overflow-y:auto;">
+        <div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:24px;">Cargando...</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/utils.js"></script>
+<script>
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('active'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('active'); }
+  async function doLogout() { await auth.signOut(); window.location.href = '/admin/login'; }
+
+  let statsData = [];
+
+  requireAdmin('/admin/login').then(user => {
+    document.getElementById('admin-email').textContent = user.email;
+    document.getElementById('admin-avatar').textContent = user.email.charAt(0).toUpperCase();
+    loadStats();
+    loadFullActivity();
+  }).catch(() => {});
+
+  const CHART_COLORS = ['#1A6EF7','#4A8FFF','#10C97A','#F5A623','#06B6D4','#FF4560','#8FA3C9','#7C3AED'];
+
+  async function loadStats() {
+    try {
+      const [evSnap, tkSnap] = await Promise.all([
+        db.collection('events').get(),
+        db.collection('tickets').get()
+      ]);
+
+      const events  = evSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const tickets = tkSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const activeTickets = tickets.filter(t => t.status !== 'cancelled');
+
+      // Global stats
+      const issued    = activeTickets.filter(t => t.status === 'active').length;
+      const validated = activeTickets.filter(t => t.used).length;
+      const waiting   = tickets.filter(t => t.status === 'waiting').length;
+
+      document.getElementById('g-issued').textContent = issued;
+      document.getElementById('g-validated').textContent = validated;
+      document.getElementById('g-validated-pct').textContent = issued > 0 ? `${Math.round((validated/issued)*100)}% del total` : '—';
+      document.getElementById('g-waiting').textContent = waiting;
+
+      // Per-event breakdown
+      statsData = events.map(ev => {
+        const evTickets = activeTickets.filter(t => t.eventId === ev.id);
+        const evIssued = evTickets.filter(t => t.status === 'active').length;
+        const evValidated = evTickets.filter(t => t.used).length;
+        const occupancy = ev.capacity > 0 ? Math.round(((ev.capacity - ev.remaining) / ev.capacity) * 100) : 0;
+        return { ...ev, issued: evIssued, validated: evValidated, occupancy };
+      }).filter(e => e.published);
+
+      // Average occupancy
+      const avgOcc = statsData.length ? Math.round(statsData.reduce((s,e) => s + e.occupancy, 0) / statsData.length) : 0;
+      document.getElementById('g-occupancy').textContent = avgOcc + '%';
+
+      renderCharts();
+      renderTable();
+
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderCharts() {
+    const top = [...statsData].sort((a,b) => b.issued - a.issued).slice(0, 8);
+    const labels = top.map(e => (e.title || '').substring(0, 18) + ((e.title||'').length > 18 ? '…' : ''));
+
+    // Chart 1: Issued per event
+    new Chart(document.getElementById('chart-issued'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: top.map(e => e.issued), backgroundColor: 'rgba(26,110,247,0.7)', borderColor:'#1A6EF7', borderWidth:1, borderRadius:4 }] },
+      options: chartOpts(false)
+    });
+
+    // Chart 2: Validated vs pending (stacked)
+    new Chart(document.getElementById('chart-validated'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Validadas', data: top.map(e => e.validated), backgroundColor: 'rgba(16,201,122,0.75)', borderRadius:4 },
+          { label: 'Pendientes', data: top.map(e => Math.max(0, e.issued - e.validated)), backgroundColor: 'rgba(143,163,201,0.35)', borderRadius:4 }
+        ]
+      },
+      options: { ...chartOpts(true), scales: { x: { stacked:true, ticks:{color:'#4A6080',font:{size:11}}, grid:{display:false} }, y: { stacked:true, ticks:{color:'#4A6080',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'} } } }
+    });
+
+    // Chart 3: Category distribution
+    const catCounts = {};
+    statsData.forEach(e => { catCounts[e.category] = (catCounts[e.category]||0) + e.issued; });
+    const catLabels = Object.keys(catCounts);
+    new Chart(document.getElementById('chart-category'), {
+      type: 'doughnut',
+      data: { labels: catLabels, datasets: [{ data: catLabels.map(c => catCounts[c]), backgroundColor: CHART_COLORS, borderWidth: 0 }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position:'right', labels:{color:'#8FA3C9',font:{size:11},boxWidth:12} } } }
+    });
+
+    // Chart 4: Occupancy %
+    new Chart(document.getElementById('chart-occupancy'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: top.map(e => e.occupancy), backgroundColor: top.map(e => e.occupancy >= 80 ? 'rgba(255,69,96,0.7)' : e.occupancy >= 50 ? 'rgba(245,166,35,0.7)' : 'rgba(16,201,122,0.7)'), borderRadius:4 }] },
+      options: { ...chartOpts(false), scales: { x: { ticks:{color:'#4A6080',font:{size:11}}, grid:{display:false} }, y: { max:100, ticks:{color:'#4A6080',font:{size:11},callback:v=>v+'%'}, grid:{color:'rgba(255,255,255,0.04)'} } } }
+    });
+  }
+
+  function chartOpts(legend) {
+    return {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: legend, labels:{color:'#8FA3C9',font:{size:11}} } },
+      scales: {
+        x: { ticks: { color:'#4A6080', font:{size:11} }, grid:{display:false} },
+        y: { ticks: { color:'#4A6080', font:{size:11} }, grid:{color:'rgba(255,255,255,0.04)'} }
+      }
+    };
+  }
+
+  function renderTable() {
+    const body = document.getElementById('stats-table-body');
+    if (!statsData.length) {
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-3);padding:32px;">No hay eventos publicados</td></tr>';
+      return;
+    }
+    const sorted = [...statsData].sort((a,b) => a.date.localeCompare(b.date));
+    body.innerHTML = sorted.map(e => `
+      <tr>
+        <td class="text-primary wrap">${sanitize(e.title)}</td>
+        <td>${formatDateShort(e.date)}</td>
+        <td>${e.capacity}</td>
+        <td>${e.issued}</td>
+        <td>${e.validated}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar-fill" style="width:${e.occupancy}%;background:${e.occupancy>=80?'var(--danger)':e.occupancy>=50?'var(--warning)':'var(--success)'}"></div></div>
+            <span style="font-size:0.78rem;color:var(--text-3);">${e.occupancy}%</span>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function exportStatsCSV() {
+    if (!statsData.length) { showToast('No hay datos para exportar', 'warning'); return; }
+    const data = statsData.map(e => ({
+      'Evento': e.title,
+      'Fecha': e.date,
+      'Categoría': e.category,
+      'Aforo': e.capacity,
+      'Emitidas': e.issued,
+      'Validadas': e.validated,
+      'Ocupación %': e.occupancy
+    }));
+    exportToCSV(data, `estadisticas_ticketone_${new Date().toISOString().split('T')[0]}.csv`);
+  }
+
+  // ── Full Activity Log ─────────────────────────────────
+  async function loadFullActivity() {
+    const container = document.getElementById('full-activity-log');
+    try {
+      const snap = await db.collection('activity_log')
+        .orderBy('timestamp', 'desc')
+        .limit(100)
+        .get();
+
+      if (snap.empty) {
+        container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:24px;">Sin actividad registrada</div>';
+        return;
+      }
+
+      container.innerHTML = snap.docs.map(d => {
+        const a = d.data();
+        const icons = {
+          create_event: '🎪', edit_event: '✏️', delete_event: '🗑️',
+          duplicate_event: '📋', publish_event: '📢', hide_event: '🙈',
+          resend_email: '📧', mark_used: '✅', cancel_ticket: '🚫',
+          validate_access: '🎉', export_csv: '⬇️'
+        };
+        return `
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--accent);"></div>
+            <div>
+              <div class="activity-text">${icons[a.action] || '📌'} ${sanitize(a.details || a.action)}</div>
+              <div class="activity-time">${a.timestamp ? formatTimestamp(a.timestamp) : ''} · ${sanitize(a.adminEmail || '')}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (e) {
+      container.innerHTML = '<div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:24px;">Sin datos disponibles</div>';
+    }
+  }
+</script>
+</body>
+</html>

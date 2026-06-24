@@ -1,0 +1,43 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "*.md",
+      "*.json"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "rewrites": [
+      { "source": "/eventos", "destination": "/eventos.html" },
+      { "source": "/evento", "destination": "/evento.html" },
+      { "source": "/reservar", "destination": "/reservar.html" },
+      { "source": "/mis-entradas", "destination": "/mis-entradas.html" },
+      { "source": "/legal/privacidad", "destination": "/legal/privacidad.html" },
+      { "source": "/legal/terminos", "destination": "/legal/terminos.html" },
+      { "source": "/legal/cookies", "destination": "/legal/cookies.html" },
+      { "source": "/admin", "destination": "/admin/index.html" },
+      { "source": "/admin/login", "destination": "/admin/login.html" },
+      { "source": "/admin/eventos", "destination": "/admin/eventos.html" },
+      { "source": "/admin/entradas", "destination": "/admin/entradas.html" },
+      { "source": "/admin/scanner", "destination": "/admin/scanner.html" },
+      { "source": "/admin/estadisticas", "destination": "/admin/estadisticas.html" },
+      { "source": "**", "destination": "/404.html" }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [{ "key": "Cache-Control", "value": "max-age=86400" }]
+      }
+    ]
+  }
+}
